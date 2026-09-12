@@ -1,0 +1,17 @@
+name: Stockroom checks
+on:
+  push:
+    paths: ['monitor/**', '.github/workflows/stockroom.yml']
+  pull_request:
+    paths: ['monitor/**', '.github/workflows/stockroom.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s monitor -p test_monitor.py -v
