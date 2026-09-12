@@ -8,6 +8,21 @@
 
 解压整个 `iPhone18Stockroom-windows-x64.zip`，双击 `iPhone18Stockroom.exe`。浏览器自动打开本地页面。无需 Python；购买助手需要已安装 Microsoft Edge。没有 Edge 时可使用已安装的 Playwright Chromium。程序未进行商业代码签名。
 
+也可双击 `Start-Windows.cmd` 一键启动。购买助手现已支持 Microsoft Edge、Google Chrome，按可用性依次选择，最后尝试 Playwright Chromium。
+
+## macOS 一键启动版
+
+- Apple 芯片 M1/M2/M3/M4 等：使用 `iPhone18Stockroom-macos-arm64.zip`。
+- Intel Mac：使用 `iPhone18Stockroom-macos-x86_64.zip`。
+
+用系统“归档实用工具”解压整个 ZIP，双击 `Start-Mac.command`。程序自动打开默认浏览器，无需安装 Python、Node 或开发工具。启动器所在终端窗口需要保持打开；关闭窗口停止服务。购买助手需要已安装 Google Chrome 或 Microsoft Edge；Safari 可以打开监控界面，但不作为自动加购浏览器。
+
+Mac 版本在 macOS 15 原生构建，当前支持目标为 macOS 15 及以上，按处理器架构选包。未使用 Apple Developer ID 签名或公证，首次打开可能需要你通过 macOS 的安全确认；我们无法预先消除系统确认。此包不修改系统安全设置。
+
+Mac 配置保存于 `~/Library/Application Support/iPhone18Stockroom`。同一系统下升级时保留该目录即可恢复目标。
+
+## 使用流程
+
 1. 选择地区与门店，点击“刷新官网目录”。只有从 Apple 产品记录解析出的真实零件号才会进入目录，未公布或查询失败不会生成虚构 SKU。
 2. 搜索 iPhone 18 / 容量 / 颜色，选择型号并添加监控。也可手动输入从官网确认的 SKU。
 3. 点击开始监控。默认每轮 30 秒；请求失败延长间隔，最多 15 分钟。一次轮询耗时另计。
@@ -48,6 +63,8 @@ python -m unittest discover -s monitor -p test_monitor.py -v
 python -m pip install pyinstaller==6.22.2
 python monitor/build.py
 ```
+
+macOS 打包同样运行 `python monitor/build.py`，必须在对应 Mac 架构上原生构建。仓库的 `Portable Windows and Mac packages` 工作流分别在 Windows、Apple 芯片 Mac、Intel Mac 上编译并测试启动，产物保留 30 天。源码运行要求 Python 3.10+；分发包已内置 Python。
 
 ## 设计与限制
 

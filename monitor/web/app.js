@@ -30,9 +30,9 @@ function render(){if(!initialized){options($('locale'),Object.entries(state.regi
    const card=node('article',undefined,'target'),top=node('div',undefined,'target-top'),title=node('div');title.append(node('strong',t.name),node('small',t.storeName+' · '+t.part));top.append(title,node('span',labels[t.status]||'未知','status '+t.status));card.append(top);
    if(t.reason||t.detail)card.append(node('div',t.reason||t.detail,'reason'));
    const controls=node('div',undefined,'target-actions'),buy=node('button','购买助手 ↗'),link=node('a','官网商品'),remove=node('button','移除');
-   buy.onclick=()=>action('purchase',{id:t.id});link.href=t.url;link.target='_blank';link.rel='noreferrer';remove.onclick=()=>action('remove',{id:t.id});controls.append(buy,link,remove);card.append(controls,node('small',t.checkedAt?'上次查询 '+new Date(t.checkedAt*1000).toLocaleTimeString():'等待首次查询'));list.append(card);
+   buy.onclick=()=>action('purchase',{id:t.id});link.href=t.url;link.target='_blank';link.rel='noreferrer';remove.onclick=()=>action('remove',{id:t.id});if(state.purchaseAvailable!==false)controls.append(buy);controls.append(link,remove);card.append(controls,node('small',t.checkedAt?'上次查询 '+new Date(t.checkedAt*1000).toLocaleTimeString():'等待首次查询'));list.append(card);
  }
- $('purchaseState').textContent=state.purchase.message||'购买助手会在独立 Edge 窗口中打开。';
+ $('purchaseState').textContent=state.purchaseAvailable===false?'Docker 监控中；点击官网商品，在本机浏览器完成购买。':state.purchase.message||'购买助手会在独立 Edge / Chrome 窗口中打开。';
  $('logs').replaceChildren(...state.logs.slice(0,50).map(l=>{const row=node('div',undefined,'log-row '+l.kind);row.append(node('time',new Date(l.time*1000).toLocaleTimeString()),node('span',l.text));return row;}));
  if(!state.logs.length)$('logs').append(node('p','准备就绪，添加目标后开始监控。'));
  renderCatalog();

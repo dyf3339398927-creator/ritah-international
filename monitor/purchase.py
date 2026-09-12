@@ -1,9 +1,18 @@
-"""User-started shopping-bag helper, using a dedicated visible Edge session."""
+"""User-started shopping-bag helper with an isolated browser session."""
 import json
 import queue
 import threading
 import time
 from core import product_url, base
+
+def launch_browser(pw, profile):
+    for channel in ('msedge', 'chrome', None):
+        try:
+            options = {'channel': channel} if channel else {}
+            return pw.chromium.launch_persistent_context(str(profile), headless=False, **options)
+        except Exception:
+            continue
+    raise RuntimeError('请安装 Microsoft Edge 或 Google Chrome 后重新打开购买助手；库存监控不受影响')
 
 class PurchaseWorker:
     def __init__(self, profile):
@@ -35,16 +44,13 @@ class PurchaseWorker:
             target = self.jobs.get()
             try:
                 from playwright.sync_api import sync_playwright
-                self.update('opening', '启动独立 Edge 窗口')
+                self.update('opening', '启动独立购买浏览器窗口')
                 with sync_playwright() as pw:
-                    try:
-                        context = pw.chromium.launch_persistent_context(str(self.profile), channel='msedge', headless=False)
-                    except Exception:
-                        context = pw.chromium.launch_persistent_context(str(self.profile), headless=False)
+                    context = launch_browser(pw, self.profile)
                     try:
                         page = context.pages[0] if context.pages else context.new_page()
                         page.goto(product_url(target['locale'], target['part']), wait_until='domcontentloaded', timeout=45000)
-                        self.update('ready', '请在 Edge 确认型号、容量、颜色及服务选项，再按本页悬浮按钮加购')
+                        self.update('ready', '请在购买窗口确认型号、容量、颜色及服务选项，再按本页悬浮按钮加购')
                         # A local overlay requires the user to review options before a single add click.
                         page.evaluate('''(title) => {
                           const box=document.createElement('div');
@@ -77,7 +83,7 @@ class PurchaseWorker:
                         if target['part'].split('/')[0] in body:
                             self.update('bag_confirmed', '购物袋中发现目标 SKU，请核对数量、门店并完成付款')
                         else:
-                            self.update('needs_review', '已尝试加购；无法确认购物袋 SKU，请在 Edge 核对。未宣称下单成功')
+                            self.update('needs_review', '已尝试加购；无法确认购物袋 SKU，请在购买窗口核对。未宣称下单成功')
                         while context.pages:
                             try:
                                 context.pages[0].wait_for_timeout(1000)

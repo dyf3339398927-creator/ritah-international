@@ -1,0 +1,38 @@
+name: Portable Windows and Mac packages
+on:
+  push:
+    paths: ['monitor/**', '.github/workflows/portable-packages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            artifact: windows-x64
+          - runner: macos-15
+            artifact: macos-arm64
+          - runner: macos-15-intel
+            artifact: macos-x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r monitor/requirements.txt pyinstaller==6.22.2
+      - run: python -m unittest discover -s monitor -p test_monitor.py -v
+      - run: python monitor/build.py
+      - run: python monitor/smoke_package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stockroom-${{ matrix.artifact }}
+          path: |
+            dist/iPhone18Stockroom-${{ matrix.artifact }}.zip
+            dist/SHA256-${{ matrix.artifact }}.json
+          if-no-files-found: error
+          retention-days: 30

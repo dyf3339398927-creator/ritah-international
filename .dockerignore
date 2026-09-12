@@ -1,0 +1,13 @@
+*
+!Dockerfile
+!LICENSE
+!SOURCES.md
+!monitor/
+!monitor/app.py
+!monitor/core.py
+!monitor/purchase.py
+!monitor/web/
+!monitor/web/**
+!config/
+!config/files/
+!config/files/stores.json

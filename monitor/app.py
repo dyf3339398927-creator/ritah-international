@@ -219,6 +219,7 @@ class Engine:
                 'interval': self.interval, 'nextCheck': self.next_check, 'logs': list(self.logs),
                 'catalogs': self.catalogs, 'catalogState': self.catalog_state,
                 'regions': {k: v[0] for k, v in REGIONS.items()}, 'stores': self.store_data,
+                'purchaseAvailable': os.getenv('STOCKROOM_CONTAINER') != '1',
                 'purchase': self.purchase.snapshot() if self.purchase else {'status': 'idle', 'message': ''}})
 
 class Handler(BaseHTTPRequestHandler):
@@ -292,6 +293,8 @@ class Handler(BaseHTTPRequestHandler):
             elif action == '/api/catalog':
                 engine.refresh(data.get('locale'))
             elif action == '/api/purchase':
+                if os.getenv('STOCKROOM_CONTAINER') == '1':
+                    raise ValueError('Docker 版请点击官网商品，在本机浏览器完成购买；自动加购助手请使用原生版')
                 with engine.lock:
                     target = next((dict(t) for t in engine.targets if t['id'] == data.get('id')), None)
                 if not target:
@@ -307,8 +310,8 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             self.reply(500, {'error': '操作失败，请检查本地文件权限或重新启动'})
 
-def serve(engine, port=0, browser=True):
-    server = ThreadingHTTPServer(('127.0.0.1', port), Handler)
+def serve(engine, port=0, browser=True, host='127.0.0.1'):
+    server = ThreadingHTTPServer((host, port), Handler)
     server.daemon_threads = True
     server.engine = engine
     server.token = secrets.token_urlsafe(32)
@@ -329,8 +332,10 @@ def serve(engine, port=0, browser=True):
 def main():
     parser = argparse.ArgumentParser(description='iPhone 18 库存监控与购买助手')
     parser.add_argument('--port', type=int, default=0)
+    parser.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], default='127.0.0.1')
     parser.add_argument('--no-browser', action='store_true')
-    parser.add_argument('--data-dir', type=Path, default=Path(os.getenv('LOCALAPPDATA', str(Path.home()))) / 'iPhone18Stockroom')
+    data_root = Path.home() / 'Library/Application Support' if sys.platform == 'darwin' else Path(os.getenv('LOCALAPPDATA', str(Path.home())))
+    parser.add_argument('--data-dir', type=Path, default=data_root / 'iPhone18Stockroom')
     parser.add_argument('--once', action='store_true', help='读取配置，查询一次并输出 JSON')
     args = parser.parse_args()
     engine = Engine(args.data_dir)
@@ -338,7 +343,7 @@ def main():
         engine.cycle()
         print(json.dumps(engine.snapshot()['targets'], ensure_ascii=False, indent=2))
         return 2 if any(t['status'] == 'unknown' for t in engine.targets) else 0
-    serve(engine, args.port, not args.no_browser)
+    serve(engine, args.port, not args.no_browser, args.host)
     return 0
 
 if __name__ == '__main__':
