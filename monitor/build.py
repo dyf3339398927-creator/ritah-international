@@ -40,7 +40,11 @@ def main():
         for p in (REPO/'LICENSE',REPO/'SOURCES.md',REPO/'config/files/stores.json'):
             z.write(p,p.relative_to(REPO))
     shutil.copy2(source,package/source.name)
-    archive=Path(shutil.make_archive(str(DIST/f'iPhone18Stockroom-{target}'),'zip',DIST,package.name))
+    if sys.platform == 'darwin':
+        archive = DIST / f'iPhone18Stockroom-{target}.zip'
+        subprocess.run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', str(package), str(archive)], check=True)
+    else:
+        archive=Path(shutil.make_archive(str(DIST/f'iPhone18Stockroom-{target}'),'zip',DIST,package.name))
     hashes={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (source,archive)}
     (DIST/f'SHA256-{target}.json').write_text(json.dumps(hashes,indent=2),encoding='utf-8')
     print(json.dumps(hashes,indent=2))

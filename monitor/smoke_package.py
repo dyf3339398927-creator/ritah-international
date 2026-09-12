@@ -2,17 +2,27 @@
 import json
 from pathlib import Path
 import queue
+import platform
 import subprocess
 import sys
 import tempfile
 import threading
 import urllib.request
+import zipfile
 
 def main():
-    root = Path(__file__).resolve().parent.parent / 'dist/iPhone18Stockroom'
-    exe = root / ('iPhone18Stockroom.exe' if sys.platform == 'win32' else 'iPhone18Stockroom')
+    dist = Path(__file__).resolve().parent.parent / 'dist'
+    target = 'windows-x64' if sys.platform == 'win32' else 'macos-' + platform.machine()
+    archive = dist / f'iPhone18Stockroom-{target}.zip'
     with tempfile.TemporaryDirectory() as temp:
-        process = subprocess.Popen([str(exe), '--no-browser', '--data-dir', temp], cwd=temp,
+        if sys.platform == 'darwin':
+            subprocess.run(['ditto', '-x', '-k', str(archive), temp], check=True)
+        else:
+            with zipfile.ZipFile(archive) as z:
+                z.extractall(temp)
+        root = Path(temp) / 'iPhone18Stockroom'
+        exe = root / ('iPhone18Stockroom.exe' if sys.platform == 'win32' else 'iPhone18Stockroom')
+        process = subprocess.Popen([str(exe), '--no-browser', '--data-dir', str(Path(temp)/'data')], cwd=temp,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lines = queue.Queue()
         def read():
