@@ -214,12 +214,15 @@ class Engine:
         self.log('监控已启动' if running else '监控已暂停')
 
     def snapshot(self):
+        container = os.getenv('STOCKROOM_CONTAINER') == '1'
+        purchase_modes = ['headless'] if container else ['headless', 'visible']
         with self.lock:
             return copy.deepcopy({'targets': self.targets, 'running': self.running, 'checking': self.checking,
                 'interval': self.interval, 'nextCheck': self.next_check, 'logs': list(self.logs),
                 'catalogs': self.catalogs, 'catalogState': self.catalog_state,
                 'regions': {k: v[0] for k, v in REGIONS.items()}, 'stores': self.store_data,
-                'purchaseAvailable': os.getenv('STOCKROOM_CONTAINER') != '1',
+                'purchaseAvailable': True, 'purchaseModes': purchase_modes,
+                'purchaseDefault': 'headless', 'container': container,
                 'purchase': self.purchase.snapshot() if self.purchase else {'status': 'idle', 'message': ''}})
 
 class Handler(BaseHTTPRequestHandler):
@@ -293,15 +296,16 @@ class Handler(BaseHTTPRequestHandler):
             elif action == '/api/catalog':
                 engine.refresh(data.get('locale'))
             elif action == '/api/purchase':
-                if os.getenv('STOCKROOM_CONTAINER') == '1':
-                    raise ValueError('Docker 版请点击官网商品，在本机浏览器完成购买；自动加购助手请使用原生版')
+                mode = data.get('mode', 'headless')
+                if os.getenv('STOCKROOM_CONTAINER') == '1' and mode != 'headless':
+                    raise ValueError('Docker 仅支持后台加购；可见助手请使用 Mac/Windows 原生版')
                 with engine.lock:
                     target = next((dict(t) for t in engine.targets if t['id'] == data.get('id')), None)
                 if not target:
                     raise ValueError('目标不存在')
                 if engine.purchase is None:
                     engine.purchase = PurchaseWorker(engine.directory / 'edge-profile')
-                engine.purchase.submit(target)
+                engine.purchase.submit(target, mode)
             else:
                 return self.reply(404, {'error': '不存在'})
             self.reply(200, {'ok': True})

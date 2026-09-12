@@ -1,9 +1,16 @@
 FROM python:3.12-slim
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 STOCKROOM_CONTAINER=1
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 STOCKROOM_CONTAINER=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 WORKDIR /app
+COPY monitor/requirements.txt ./requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt \
+    && python -m playwright install --with-deps chromium \
+    && chmod -R a+rX /ms-playwright \
+    && rm -rf /var/lib/apt/lists/*
 RUN groupadd --gid 10001 stockroom && useradd --uid 10001 --gid stockroom --create-home stockroom \
     && mkdir /data && chown stockroom:stockroom /data
 COPY monitor/app.py monitor/core.py monitor/purchase.py ./
+COPY monitor/smoke_headless.py ./smoke_headless.py
 COPY monitor/web ./web
 COPY config/files/stores.json ./stores.json
 COPY LICENSE SOURCES.md ./

@@ -9,7 +9,8 @@ def main():
     dist.mkdir(exist_ok=True)
     names = ['Dockerfile','compose.yaml','.dockerignore','DOCKER.md','LICENSE','SOURCES.md',
              'Start-Docker-Mac.command','Start-Docker-Windows.cmd',
-             'monitor/app.py','monitor/core.py','monitor/purchase.py','config/files/stores.json']
+             'monitor/app.py','monitor/core.py','monitor/purchase.py','monitor/requirements.txt',
+             'monitor/smoke_headless.py','config/files/stores.json']
     names += [p.relative_to(repo).as_posix() for p in (repo/'monitor/web').iterdir() if p.is_file()]
     archive = dist / 'iPhone18Stockroom-docker.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:

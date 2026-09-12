@@ -8,6 +8,7 @@ services:
       - stockroom-data:/data
     restart: unless-stopped
     init: true
+    shm_size: 1gb
     security_opt:
       - no-new-privileges:true
 volumes:

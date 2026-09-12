@@ -6,6 +6,8 @@
 !monitor/app.py
 !monitor/core.py
 !monitor/purchase.py
+!monitor/requirements.txt
+!monitor/smoke_headless.py
 !monitor/web/
 !monitor/web/**
 !config/

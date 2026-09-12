@@ -16,5 +16,5 @@
 
 - 原生包版本 `39dc005`：GitHub Actions 运行 `34682267943`，Windows x64、macOS Apple Silicon、macOS Intel 三项均通过单元测试、打包、从 ZIP 独立解压启动和 API/静态页面检查。Mac 包使用 ditto 保留符号链接和启动器权限；在 macOS 15 上验证，尚未签名或公证。
 - Docker 检查版本 `f597890`：运行 `34682325987`，AMD64 和 ARM64 原生 Linux runner 均通过 Compose 构建、健康检查和容器内目录检查。当前 Windows 主机未安装 Docker，未在此机运行容器。
-- Docker 版仅提供监控和官方购买链接；原生版提供可见浏览器购买助手，真实加购与结账仍未验证，不会自动付款。
+- Docker 版现已纳入无头 Chromium 加购助手；原生版同时提供默认无头模式和可见浏览器助手。自动化测试只验证本地测试页、浏览器启动与单次元素点击，真实 Apple 加购与结账仍未验证，不会自动付款。
 - 仓库原有 Go 工作流仍失败；上述通过结果仅指新 Stockroom 测试、便携包和 Docker 检查，并不表示旧 Go 桌面程序已修复。

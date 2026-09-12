@@ -5,9 +5,11 @@ import threading
 import unittest
 import urllib.request
 import urllib.error
+from unittest.mock import patch
 
 from core import parse_pickup, parse_catalog
 from app import Engine, Handler, ThreadingHTTPServer
+from purchase import launch_browser, normalize_mode
 
 SKU = 'TEST1CH/A'
 
@@ -74,6 +76,25 @@ class Tests(unittest.TestCase):
         self.assertEqual(parse_catalog('iPhone 18 Pro','zh_CN','source'),[])
         raw='productSelectionData: '+json.dumps({'products':[{'partNumber':SKU,'familyType':'iPhone18Pro','dimensionCapacity':'512gb'}]})
         self.assertEqual(parse_catalog(raw,'zh_CN','source')[0]['part'],SKU)
+    def test_purchase_browser_modes(self):
+        calls=[]
+        class Chromium:
+            def launch_persistent_context(self, profile, **options):
+                calls.append((profile, options));return object()
+        class Playwright: chromium=Chromium()
+        self.assertIsNotNone(launch_browser(Playwright(), 'profile-a', 'headless'))
+        self.assertTrue(calls[-1][1]['headless'])
+        self.assertIsNotNone(launch_browser(Playwright(), 'profile-b', 'visible'))
+        self.assertFalse(calls[-1][1]['headless'])
+        with self.assertRaises(ValueError): normalize_mode('hidden-ish')
+    def test_purchase_capabilities_prefer_headless(self):
+        state = self.engine.snapshot()
+        self.assertEqual(state['purchaseDefault'], 'headless')
+        self.assertEqual(state['purchaseModes'], ['headless', 'visible'])
+        with patch.dict('os.environ', {'STOCKROOM_CONTAINER':'1'}):
+            state = self.engine.snapshot()
+        self.assertEqual(state['purchaseModes'], ['headless'])
+        self.assertTrue(state['purchaseAvailable'])
     def test_server_auth_and_traversal(self):
         server=ThreadingHTTPServer(('127.0.0.1',0),Handler);server.engine=self.engine;server.token='test-token'
         threading.Thread(target=server.serve_forever,daemon=True).start()
