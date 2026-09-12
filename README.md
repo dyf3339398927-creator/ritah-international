@@ -1,5 +1,9 @@
 # Apple Store 预约助手
 
+## 新版：香港 / 日本 iPhone 18 Stockroom
+
+新增浏览器工作台、Python 后端、官方目录刷新，以及优先无头、可回退到可见窗口的独立购买助手。默认香港地区、日本优先；支持 Windows、Mac 和内置 Chromium 的 Docker 部署。请阅读 [新版使用说明](monitor/README.md)、[来源与方法对比](SOURCES.md) 和 [验证记录](VALIDATION.md)。下方为原 Go 桌面版文档，新版从 `monitor/app.py` 启动。
+
 ## 支持 iPhone 17 系列
 
 ![UI](screenshot.png)

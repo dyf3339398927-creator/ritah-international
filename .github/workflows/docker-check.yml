@@ -1,0 +1,29 @@
+name: Docker image check
+on:
+  push:
+    paths: ['Dockerfile', 'compose.yaml', '.dockerignore', 'monitor/**', '.github/workflows/docker-check.yml']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    env:
+      DOCKER_DEFAULT_PLATFORM: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+      - run: docker compose up -d --build --wait
+      - name: Check local page and default region
+        run: |
+          curl --fail http://127.0.0.1:8765/ >/dev/null
+          docker compose exec -T stockroom python -c "from app import Engine; e=Engine('/data'); s=e.snapshot(); assert len(e.store_data['zh_HK'])==6; assert len(e.store_data['ja_JP'])>0; assert s['purchaseModes']==['headless']; assert s['purchaseDefault']=='headless'"
+          timeout 90 docker compose exec -T stockroom python smoke_headless.py
+      - if: always()
+        run: docker compose down
