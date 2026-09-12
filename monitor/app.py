@@ -330,6 +330,8 @@ def serve(engine, port=0, browser=True, host='127.0.0.1'):
         server.server_close()
 
 def main():
+    if sys.stdout is not None and hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace', line_buffering=True)
     parser = argparse.ArgumentParser(description='iPhone 18 库存监控与购买助手')
     parser.add_argument('--port', type=int, default=0)
     parser.add_argument('--host', choices=['127.0.0.1', '0.0.0.0'], default='127.0.0.1')

@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import urllib.request
 import zipfile
 
@@ -25,13 +26,22 @@ def main():
         process = subprocess.Popen([str(exe), '--no-browser', '--data-dir', str(Path(temp)/'data')], cwd=temp,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lines = queue.Queue()
+        captured = []
         def read():
             for line in process.stdout:
-                lines.put(line.decode('utf-8', errors='replace').strip())
+                decoded = line.decode('utf-8', errors='replace').strip()
+                captured.append(decoded)
+                lines.put(decoded)
         threading.Thread(target=read, daemon=True).start()
         try:
+            deadline = time.monotonic() + 120
             while True:
-                line = lines.get(timeout=30)
+                try:
+                    line = lines.get(timeout=1)
+                except queue.Empty:
+                    if process.poll() is not None or time.monotonic() > deadline:
+                        raise RuntimeError('Native startup failed: ' + repr(captured))
+                    continue
                 if line.startswith('http://127.0.0.1:'):
                     break
                 if process.poll() is not None:

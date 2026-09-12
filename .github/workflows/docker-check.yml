@@ -6,9 +6,15 @@ permissions:
   contents: read
 jobs:
   smoke:
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+    env:
+      DOCKER_DEFAULT_PLATFORM: ${{ matrix.platform }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
       - run: docker compose config --quiet
       - run: docker compose up -d --build --wait
       - name: Check local page and default region
